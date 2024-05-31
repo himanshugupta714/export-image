@@ -326,6 +326,9 @@ const LassoTool: React.FC = () => {
     link.href = croppedImage;
     link.download = "cropped-image.png";
     link.click();
+
+    setRect(null);
+    redrawImage();
   };
 
   return (
