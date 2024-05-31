@@ -1,0 +1,43 @@
+.toolbox {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 10px;
+}
+
+.toolbox button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 20px;
+  margin: 0 5px;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.3s;
+  font-size: 16px;
+}
+
+.toolbox button:hover {
+  background-color: #0056b3;
+  transform: translateY(-2px);
+}
+
+/* Canvas container styling */
+.canvas-container {
+  position: relative;
+  border: 2px solid #ddd;
+  background-color: white;
+}
+
+.canvas-container canvas {
+  display: block;
+}
+
+/* Image styling */
+.hidden-image {
+  display: none;
+}

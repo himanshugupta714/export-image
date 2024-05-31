@@ -11,16 +11,14 @@ const Canvas: React.FC<CanvasProps> = ({
 }) => {
   return (
     <div>
-      {image && (
-        <canvas
-          ref={canvasRef}
-          width={1200}
-          height={1200}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-        />
-      )}
+      <canvas
+        ref={canvasRef}
+        width={1200}
+        height={700}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+      />
       <img
         ref={imgRef}
         src={image as string}

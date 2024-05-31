@@ -4,6 +4,7 @@ import Canvas from "../Canvas";
 import { useImage } from "../../hooks/useImage";
 import { ToolBox } from "../Tools/enum";
 import Toolbox from "../Tools/Tools";
+import "./drawing.css";
 
 const Drawing: React.FC = () => {
   const { image, handleImageUpload } = useImage();
@@ -86,19 +87,36 @@ const Drawing: React.FC = () => {
   };
 
   return (
-    <div>
-      <input type="file" accept="image/*" onChange={handleImageUpload} />
+    <div className="container">
+      <div className="file-input-wrapper">
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleImageUpload}
+          className="file-input"
+          id="file-input"
+        />
+        <label htmlFor="file-input" className="file-input-label">
+          Upload Image
+        </label>
+      </div>
+
       <Toolbox onSelectTool={setTool} />
 
-      <Canvas
-        image={image}
-        canvasRef={canvasRef}
-        imgRef={imgRef}
-        handleMouseDown={handleMouseDown}
-        handleMouseMove={handleMouseMove}
-        handleMouseUp={handleMouseUp}
-      />
-      <button onClick={exportSelection}>Export Selection</button>
+      <button className="export-button" onClick={exportSelection}>
+        Export Selection
+      </button>
+
+      <div className="canvas-container">
+        <Canvas
+          image={image}
+          canvasRef={canvasRef}
+          imgRef={imgRef}
+          handleMouseDown={handleMouseDown}
+          handleMouseMove={handleMouseMove}
+          handleMouseUp={handleMouseUp}
+        />
+      </div>
     </div>
   );
 };

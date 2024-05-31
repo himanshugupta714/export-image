@@ -5,7 +5,7 @@ const Toolbox: React.FC<{ onSelectTool: (tool: ToolBox) => void }> = ({
   onSelectTool,
 }) => {
   return (
-    <div>
+    <div className="toolbox">
       <button onClick={() => onSelectTool(ToolBox.SQUARE)}>
         Square Selection
       </button>
