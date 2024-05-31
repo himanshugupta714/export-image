@@ -74,6 +74,28 @@ const Drawing: React.FC = () => {
         width / scale,
         height / scale
       );
+    } else if (tool === ToolBox.LINE && points.length >= 3) {
+      offscreenCanvas.width = imgWidth;
+      offscreenCanvas.height = imgHeight;
+
+      offscreenContext.drawImage(img, 0, 0);
+      offscreenContext.globalCompositeOperation = "destination-in";
+      offscreenContext.beginPath();
+      points.forEach((point, index) => {
+        if (index === 0) {
+          offscreenContext.moveTo(
+            (point.x - offsetXRef.current) / scale,
+            (point.y - offsetYRef.current) / scale
+          );
+        } else {
+          offscreenContext.lineTo(
+            (point.x - offsetXRef.current) / scale,
+            (point.y - offsetYRef.current) / scale
+          );
+        }
+      });
+      offscreenContext.closePath();
+      offscreenContext.fill();
     }
 
     const croppedImage = offscreenCanvas.toDataURL("image/png");
@@ -115,6 +137,7 @@ const Drawing: React.FC = () => {
           handleMouseDown={handleMouseDown}
           handleMouseMove={handleMouseMove}
           handleMouseUp={handleMouseUp}
+          redrawImage={redrawImage}
         />
       </div>
     </div>

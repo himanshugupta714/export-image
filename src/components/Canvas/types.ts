@@ -5,4 +5,5 @@ export interface CanvasProps {
   handleMouseDown: (event: React.MouseEvent<HTMLCanvasElement>) => void;
   handleMouseMove: (event: React.MouseEvent<HTMLCanvasElement>) => void;
   handleMouseUp: () => void;
+  redrawImage: () => void;
 }

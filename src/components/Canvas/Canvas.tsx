@@ -8,9 +8,10 @@ const Canvas: React.FC<CanvasProps> = ({
   handleMouseDown,
   handleMouseMove,
   handleMouseUp,
+  redrawImage,
 }) => {
   return (
-    <div>
+    <>
       <canvas
         ref={canvasRef}
         width={1200}
@@ -24,8 +25,9 @@ const Canvas: React.FC<CanvasProps> = ({
         src={image as string}
         style={{ display: "none" }}
         alt="uploaded"
+        onLoad={redrawImage}
       />
-    </div>
+    </>
   );
 };
 

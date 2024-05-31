@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-expect-error
@@ -8,21 +8,26 @@ import { ToolBox } from "../components/Tools/enum";
 
 export const useDrawing = (
   tool: ToolBox,
-  image: string | ArrayBuffer | null
+  image: string | null | ArrayBuffer
 ) => {
-  const [isDrawing, setIsDrawing] = useState(false);
+  const [isDrawing, setIsDrawing] = useState<boolean>(false);
+
   const [points, setPoints] = useState<{ x: number; y: number }[]>([]);
+
   const [rect, setRect] = useState<{
     startX: number;
     startY: number;
     width: number;
     height: number;
   } | null>(null);
+
   const [isResizing, setIsResizing] = useState(false);
+
   const [startResizeCoords, setStartResizeCoords] = useState<{
     startX: number;
     startY: number;
   } | null>(null);
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const scaleRef = useRef<number>(1);
@@ -40,6 +45,8 @@ export const useDrawing = (
         setIsDrawing(true);
         setRect({ startX: offsetX, startY: offsetY, width: 0, height: 0 });
       }
+    } else if (tool === ToolBox.LINE) {
+      setPoints((prevPoints) => [...prevPoints, { x: offsetX, y: offsetY }]);
     } else {
       setIsDrawing(true);
       setPoints([{ x: offsetX, y: offsetY }]);
@@ -74,7 +81,7 @@ export const useDrawing = (
   };
 
   const handleMouseUp = () => {
-    if (tool === ToolBox.LASSO) {
+    if (tool === ToolBox.LASSO || tool === ToolBox.LINE) {
       setIsDrawing(false);
       smoothPoints();
     } else if (tool === ToolBox.SQUARE) {
@@ -128,7 +135,7 @@ export const useDrawing = (
     setPoints(contours.map(([x, y]) => ({ x, y })));
   };
 
-  const redrawImage = () => {
+  const redrawImage = useCallback(() => {
     if (!canvasRef.current || !image) return;
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
@@ -156,7 +163,28 @@ export const useDrawing = (
       context.clearRect(0, 0, canvas.width, canvas.height);
       context.drawImage(img, offsetX, offsetY, scaledWidth, scaledHeight);
 
+      if (tool === ToolBox.LASSO || tool === ToolBox.LINE) {
+        context.strokeStyle = "red";
+        context.lineWidth = 2;
+        context.beginPath();
+        points.forEach((point, index) => {
+          if (index === 0) {
+            context.moveTo(point.x, point.y);
+          } else {
+            context.lineTo(point.x, point.y);
+          }
+        });
+        if (tool === ToolBox.LINE) {
+          context.closePath();
+        }
+        context.stroke();
+      }
+
       if (rect) {
+        context.fillStyle = "rgba(0, 0, 0, 0.5)";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.clearRect(rect.startX, rect.startY, rect.width, rect.height);
+
         context.strokeStyle = "blue";
         context.lineWidth = 2;
         context.strokeRect(rect.startX, rect.startY, rect.width, rect.height);
@@ -176,7 +204,7 @@ export const useDrawing = (
         );
       }
     }
-  };
+  }, [image, points, rect, tool]);
 
   const isMouseOnEdge = (
     mouseX: number,
@@ -228,7 +256,7 @@ export const useDrawing = (
       context.clearRect(0, 0, canvas.width, canvas.height);
       context.drawImage(img, offsetX, offsetY, scaledWidth, scaledHeight);
 
-      if (tool === ToolBox.LASSO) {
+      if (tool === ToolBox.LASSO || tool === ToolBox.LINE) {
         context.strokeStyle = "red";
         context.lineWidth = 2;
         context.beginPath();
@@ -239,7 +267,9 @@ export const useDrawing = (
             context.lineTo(point.x, point.y);
           }
         });
-        context.closePath();
+        if (tool === ToolBox.LINE) {
+          context.closePath();
+        }
         context.stroke();
       }
 
@@ -254,6 +284,7 @@ export const useDrawing = (
 
         // Draw the image inside the rectangle selection without zoom
         context.globalAlpha = 1; // Full opacity
+
         context.drawImage(
           img,
           (rect.startX - offsetX) / scale,

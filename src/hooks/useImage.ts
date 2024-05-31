@@ -1,7 +1,8 @@
 import { useState } from "react";
+import sampleImage from "./sample.webp";
 
 export const useImage = () => {
-  const [image, setImage] = useState<string | ArrayBuffer | null>(null);
+  const [image, setImage] = useState<string | ArrayBuffer | null>(sampleImage);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
