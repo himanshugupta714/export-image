@@ -1,11 +1,11 @@
 import React from "react";
-import { ToolBox } from "./components/Tools/enum";
+import { ToolBox } from "./enum";
 
 const Toolbox: React.FC<{ onSelectTool: (tool: ToolBox) => void }> = ({
   onSelectTool,
 }) => {
   return (
-    <div className="toolbox">
+    <div>
       <button onClick={() => onSelectTool(ToolBox.SQUARE)}>
         Square Selection
       </button>

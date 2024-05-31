@@ -1,12 +1,17 @@
-import React, { useState, useRef, useEffect } from "react";
-import { march } from "marching-squares";
-import Toolbox from "./Toolbox";
+import { useState, useRef, useEffect } from "react";
 
-const LassoTool: React.FC = () => {
-  const [image, setImage] = useState<string | ArrayBuffer | null>(null);
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
+import { march } from "marching-squares";
+
+import { ToolBox } from "../components/Tools/enum";
+
+export const useDrawing = (
+  tool: ToolBox,
+  image: string | ArrayBuffer | null
+) => {
   const [isDrawing, setIsDrawing] = useState(false);
   const [points, setPoints] = useState<{ x: number; y: number }[]>([]);
-  const [tool, setTool] = useState<string>("lasso");
   const [rect, setRect] = useState<{
     startX: number;
     startY: number;
@@ -24,19 +29,10 @@ const LassoTool: React.FC = () => {
   const offsetXRef = useRef<number>(0);
   const offsetYRef = useRef<number>(0);
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => setImage(reader.result);
-      reader.readAsDataURL(file);
-    }
-  };
-
   const handleMouseDown = (event: React.MouseEvent<HTMLCanvasElement>) => {
     const { offsetX, offsetY } = event.nativeEvent;
 
-    if (tool === "square") {
+    if (tool === ToolBox.SQUARE) {
       if (rect && isMouseOnEdge(offsetX, offsetY, rect)) {
         setIsResizing(true);
         setStartResizeCoords({ startX: offsetX, startY: offsetY });
@@ -53,9 +49,9 @@ const LassoTool: React.FC = () => {
   const handleMouseMove = (event: React.MouseEvent<HTMLCanvasElement>) => {
     const { offsetX, offsetY } = event.nativeEvent;
 
-    if (isDrawing && tool === "lasso") {
+    if (isDrawing && tool === ToolBox.LASSO) {
       setPoints((prevPoints) => [...prevPoints, { x: offsetX, y: offsetY }]);
-    } else if (rect && tool === "square") {
+    } else if (rect && tool === ToolBox.SQUARE) {
       if (isResizing && startResizeCoords) {
         const deltaX = offsetX - startResizeCoords.startX;
         const deltaY = offsetY - startResizeCoords.startY;
@@ -78,36 +74,14 @@ const LassoTool: React.FC = () => {
   };
 
   const handleMouseUp = () => {
-    if (tool === "lasso") {
+    if (tool === ToolBox.LASSO) {
       setIsDrawing(false);
       smoothPoints();
-    } else if (tool === "square") {
+    } else if (tool === ToolBox.SQUARE) {
       setIsDrawing(false);
       setIsResizing(false);
       redrawImage(); // Redraw the original image without grey overlay
     }
-  };
-
-  const isMouseOnEdge = (
-    mouseX: number,
-    mouseY: number,
-    rect: { startX: number; startY: number; width: number; height: number }
-  ) => {
-    const { startX, startY, width, height } = rect;
-    const edgeSize = 10; // size of the edge for resizing
-
-    const onLeftEdge =
-      mouseX >= startX - edgeSize && mouseX <= startX + edgeSize;
-    const onRightEdge =
-      mouseX >= startX + width - edgeSize &&
-      mouseX <= startX + width + edgeSize;
-    const onTopEdge =
-      mouseY >= startY - edgeSize && mouseY <= startY + edgeSize;
-    const onBottomEdge =
-      mouseY >= startY + height - edgeSize &&
-      mouseY <= startY + height + edgeSize;
-
-    return onLeftEdge || onRightEdge || onTopEdge || onBottomEdge;
   };
 
   const smoothPoints = () => {
@@ -145,7 +119,12 @@ const LassoTool: React.FC = () => {
       binaryData[i / 4] = imageData.data[i + 3] > 128 ? 1 : 0;
     }
 
-    const contours = march(binaryData, imageData.width, imageData.height);
+    const contours: [number, number][] = march(
+      binaryData,
+      imageData.width,
+      imageData.height
+    );
+
     setPoints(contours.map(([x, y]) => ({ x, y })));
   };
 
@@ -199,6 +178,28 @@ const LassoTool: React.FC = () => {
     }
   };
 
+  const isMouseOnEdge = (
+    mouseX: number,
+    mouseY: number,
+    rect: { startX: number; startY: number; width: number; height: number }
+  ) => {
+    const { startX, startY, width, height } = rect;
+    const edgeSize = 10; // size of the edge for resizing
+
+    const onLeftEdge =
+      mouseX >= startX - edgeSize && mouseX <= startX + edgeSize;
+    const onRightEdge =
+      mouseX >= startX + width - edgeSize &&
+      mouseX <= startX + width + edgeSize;
+    const onTopEdge =
+      mouseY >= startY - edgeSize && mouseY <= startY + edgeSize;
+    const onBottomEdge =
+      mouseY >= startY + height - edgeSize &&
+      mouseY <= startY + height + edgeSize;
+
+    return onLeftEdge || onRightEdge || onTopEdge || onBottomEdge;
+  };
+
   useEffect(() => {
     if (!canvasRef.current || !image) return;
     const canvas = canvasRef.current;
@@ -227,7 +228,7 @@ const LassoTool: React.FC = () => {
       context.clearRect(0, 0, canvas.width, canvas.height);
       context.drawImage(img, offsetX, offsetY, scaledWidth, scaledHeight);
 
-      if (tool === "lasso") {
+      if (tool === ToolBox.LASSO) {
         context.strokeStyle = "red";
         context.lineWidth = 2;
         context.beginPath();
@@ -268,95 +269,17 @@ const LassoTool: React.FC = () => {
     }
   }, [points, image, rect, tool]);
 
-  const exportSelection = () => {
-    if (!canvasRef.current || !imgRef.current) return;
-    const canvas = canvasRef.current;
-    const img = imgRef.current;
-    const offscreenCanvas = document.createElement("canvas");
-    const offscreenContext = offscreenCanvas.getContext("2d");
-    if (!offscreenContext) return;
-
-    const imgWidth = img.naturalWidth;
-    const imgHeight = img.naturalHeight;
-
-    // Calculate the scaling factor
-    const scale = Math.min(canvas.width / imgWidth, canvas.height / imgHeight);
-
-    if (tool === "lasso" && points.length >= 3) {
-      offscreenCanvas.width = imgWidth;
-      offscreenCanvas.height = imgHeight;
-
-      offscreenContext.drawImage(img, 0, 0);
-      offscreenContext.globalCompositeOperation = "destination-in";
-      offscreenContext.beginPath();
-      points.forEach((point, index) => {
-        if (index === 0) {
-          offscreenContext.moveTo(
-            (point.x - offsetXRef.current) / scale,
-            (point.y - offsetYRef.current) / scale
-          );
-        } else {
-          offscreenContext.lineTo(
-            (point.x - offsetXRef.current) / scale,
-            (point.y - offsetYRef.current) / scale
-          );
-        }
-      });
-      offscreenContext.closePath();
-      offscreenContext.fill();
-    } else if (tool === "square" && rect) {
-      const { startX, startY, width, height } = rect;
-      offscreenCanvas.width = width / scale;
-      offscreenCanvas.height = height / scale;
-      offscreenContext.drawImage(
-        img,
-        (startX - offsetXRef.current) / scale,
-        (startY - offsetYRef.current) / scale,
-        width / scale,
-        height / scale,
-        0,
-        0,
-        width / scale,
-        height / scale
-      );
-    }
-
-    const croppedImage = offscreenCanvas.toDataURL("image/png");
-    const link = document.createElement("a");
-    link.href = croppedImage;
-    link.download = "cropped-image.png";
-    link.click();
-
-    setRect(null);
-    redrawImage();
+  return {
+    canvasRef,
+    imgRef,
+    handleMouseDown,
+    handleMouseMove,
+    handleMouseUp,
+    redrawImage,
+    rect,
+    points,
+    offsetXRef,
+    offsetYRef,
+    setRect,
   };
-
-  return (
-    <div>
-      <input type="file" accept="image/*" onChange={handleImageUpload} />
-      <Toolbox onSelectTool={setTool} />
-      <div>
-        {image && (
-          <canvas
-            ref={canvasRef}
-            width={1200}
-            height={1200}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            style={{ border: "1px solid black" }}
-          />
-        )}
-        <img
-          ref={imgRef}
-          src={image as string}
-          style={{ display: "none" }}
-          alt="uploaded"
-        />
-      </div>
-      <button onClick={exportSelection}>Export Selection</button>
-    </div>
-  );
 };
-
-export default LassoTool;
